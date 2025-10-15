@@ -1,2 +1,9 @@
+# Environment variables
 .env
-**.pyc
+
+# Python virtual environment
+venv/
+
+# Other common Python files to ignore
+__pycache__/
+*.pyc
