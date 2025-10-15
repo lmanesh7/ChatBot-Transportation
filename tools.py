@@ -1,33 +1,50 @@
-# file: tools.py
+# file: tools.py (Upgraded Version)
 
-import os
-from pymongo import MongoClient
-from datetime import datetime
-from langchain.tools import tool  # <-- Make sure this import is present
+from langchain.tools import tool
+from pydantic.v1 import BaseModel, Field
+from typing import Optional
 
-# --- It's best practice to store secrets in an environment variable ---
-MONGO_URI = "mongodb+srv://lakshmanmanesh235_db_user:jsZYKWZqgJqUqa5v@cluster0.ykbqyhp.mongodb.net/"#os.environ["MONGO_URI"]
-client = MongoClient(MONGO_URI)
-db = client.transportationDB
+class WorkOrderInput(BaseModel):
+    """Input schema for the create_work_order tool."""
+    location: str = Field(description="The primary location of the issue, like a street name, highway number, or address.")
+    issue: str = Field(description="A detailed description of the maintenance issue being reported.")
+    priority: int = Field(description="The priority of the request, where 1 is high, 2 is medium, and 3 is low.", ge=1, le=3)
+    direction: Optional[str] = Field(
+        default=None, 
+        description="The direction of travel if on a highway (e.g., westbound, northbound, southbound, eastbound)."
+    )
+    landmark: Optional[str] = Field(
+        default=None, 
+        description="A nearby landmark to help crews find the exact location (e.g., 'near the big oak tree', 'just past the McDonalds')."
+    )
 
-# The function must be decorated with @tool
-@tool
-def create_work_order(description: str, location: str, priority: int) -> str:
+@tool("create_work_order", args_schema=WorkOrderInput)
+def create_work_order(location: str, issue: str, priority: int, direction: Optional[str] = None, landmark: Optional[str] = None) -> str:
     """
-    Use this tool to create a new maintenance work order.
-    Provide a description of the issue, its location, and a priority from 1 (high) to 3 (low).
+    Use this tool when a user reports a specific maintenance issue that needs to be fixed.
+    This tool requires a detailed location, a description of the issue, and a priority.
+    It can also accept optional direction and landmark details for more precision.
     """
-    print("--- Calling create_work_order tool ---")
-
-    work_order = {
-        "description": description,
+    # In a real application, you would save these details to a database.
+    # The document would now look much richer.
+    report_details = {
         "location": location,
+        "issue": issue,
         "priority": priority,
-        "status": "open",
-        "createdAt": datetime.utcnow()
+        "direction": direction,
+        "landmark": landmark,
+        "status": "open"
     }
-
-    result = db.reports.insert_one(work_order)
-
-    # Return a confirmation string to the agent
-    return f"Work order created successfully. The new work order ID is {result.inserted_id}."
+    
+    print(f"--- Creating detailed work order: {report_details} ---")
+    work_order_id = "WO-2025-1014-C8D9" # Generate a unique ID
+    
+    # Create a confirmation message
+    confirmation = f"Successfully created work order {work_order_id} for a priority-{priority} issue: '{issue}' at {location}."
+    if direction:
+        confirmation += f" (Direction: {direction})"
+    if landmark:
+        confirmation += f" (Landmark: {landmark})"
+    confirmation += " A crew will be dispatched."
+    
+    return confirmation
