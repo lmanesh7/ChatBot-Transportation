@@ -17,7 +17,7 @@ from tools import create_work_order
 
 # --- App Configuration ---
 st.set_page_config(page_title="Kansas DOT AI Assistant", page_icon=" Kansas DOT AI Assistant")
-st.title("AI Assistant")
+st.title("Kansas DOT AI Assistant 🛣️")
 st.caption("Your smart assistant for road information and maintenance reporting.")
 
 # --- Core Logic Caching ---
